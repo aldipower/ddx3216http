@@ -34,6 +34,7 @@ header h1 {
 .fader {
   width: 100%;
   display: flex;
+  flex-direction: column;
   /* flex: 1 1 74px;
   max-width: 74px; */
 }
@@ -48,4 +49,67 @@ header h1 {
   height: 6px;
   border-radius: 10px 10px 0 0;
   opacity: 0.9
+}
+
+.fader-name-input {
+  margin-top: 6px;
+  font-size: 13px;
+  color: #fff;
+  background: transparent;
+  border: none;
+  text-align: center;
+  width: 90%;
+  border-bottom: 1px solid #334;
+  padding: 2px 4px
+}
+
+.fader-name-input:focus {
+  outline: none;
+  border-bottom: 1px solid var(--accent);
+}
+
+.db-value-indicator {
+  font-size: 14px;
+  margin-top: 12px;
+  color: #cfe8ff;
+  /* min-height: 20px */
+  width: 90%;
+  text-align: center;
+}
+
+.fader-container {
+  user-select: none;
+  margin-top: 12px;
+
+  width: 100%;
+  height: 220px;
+  display: flex;
+}
+
+.fader-left-gap {
+  flex-grow: 1;
+}
+
+.fader-slide {
+  width: 8px;
+  height: 100%;
+  border-radius: 10px;
+  background: black;
+
+  flex-grow: 0;
+}
+
+.fader-knob {
+  position: relative;
+
+  width: 24px;
+  height: 52px; /* factor: 2.167660806748611 */
+  margin-left: -8px;
+  margin-top: -26px;
+
+  pointer-events: none;
+}
+
+.fader-right-ticks {
+  flex-grow: 1;
 }
