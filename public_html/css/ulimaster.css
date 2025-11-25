@@ -1,0 +1,51 @@
+body {
+  margin: 0;
+  font-family: system-ui;
+  background: #071827;
+  color: #e6eef6
+}
+
+.app {
+  /* max-width: 1300px; */
+  /* margin: 24px auto; */
+  padding: 18px;
+  /* background: rgba(255, 255, 255, 0.03); */
+  /* border-radius: 12px */
+}
+
+header {
+  margin-bottom: 16px;
+}
+
+header h1 {
+  margin: 0;
+  font-size: 18px
+}
+
+.mixer {
+  height: 400px;
+
+  display: grid;
+  column-gap: 4px;
+  grid-template-columns: repeat(16, minmax(74px, 1fr));
+
+}
+
+.fader {
+  width: 100%;
+  display: flex;
+  /* flex: 1 1 74px;
+  max-width: 74px; */
+}
+
+.colorbar {
+  background: gray;
+
+  /* position: absolute; */
+  /* top: 0;
+  left: 0; */
+  width: 100%;
+  height: 6px;
+  border-radius: 10px 10px 0 0;
+  opacity: 0.9
+}

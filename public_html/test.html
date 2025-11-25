@@ -1,0 +1,401 @@
+<!doctype html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>16-Channel Mixer — erweitert</title>
+    <style>
+        :root {
+            --min: -80;
+            --max: 10;
+            --fader-height: 400px;
+            --thumb-size: 18px;
+            --track-width: 8px;
+            --accent: #1e90ff;
+            --muted: #9aa6b2;
+        }
+
+        * {
+            box-sizing: border-box
+        }
+
+        body {
+            margin: 0;
+            font-family: Inter, system-ui;
+            background: #071827;
+            color: #e6eef6
+        }
+
+        .app {
+            max-width: 1300px;
+            margin: 24px auto;
+            padding: 18px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 12px
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 18px
+        }
+
+        .mixer {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(64px, 1fr));
+            gap: 14px;
+            margin-top: 14px
+        }
+
+        .channel {
+            padding: 10px;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative
+        }
+
+        .channel .colorbar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 6px;
+            border-radius: 10px 10px 0 0;
+            opacity: 0.9
+        }
+
+        .name-edit {
+            margin-top: 6px;
+            font-size: 13px;
+            color: #fff;
+            background: transparent;
+            border: none;
+            text-align: center;
+            width: 90%;
+            border-bottom: 1px solid #334;
+            padding: 2px 4px
+        }
+
+        .name-edit:focus {
+            outline: none;
+            border-bottom: 1px solid var(--accent)
+        }
+
+        .value-top {
+            font-size: 14px;
+            margin-top: 12px;
+            color: #cfe8ff;
+            min-height: 20px
+        }
+
+        .fader-wrap {
+            position: relative;
+            height: var(--fader-height);
+            width: 38px;
+            display: flex;
+            justify-content: center;
+            margin-top: 0px
+        }
+
+        .track {
+            position: absolute;
+            top: 5%;
+            height: 95%;
+            width: var(--track-width);
+            background: #0b1216;
+            border-radius: 6px
+        }
+
+        .fill {
+            position: absolute;
+            width: var(--track-width);
+            bottom: 0;
+            background: var(--accent);
+            border-radius: 6px
+        }
+
+        .marker0 {
+            position: absolute;
+            left: calc(50% + 14px);
+            width: 28px;
+            height: 2px;
+            background: var(--accent);
+            border-radius: 1px
+        }
+
+        .marker0::after {
+            content: "0 dB";
+            font-size: 11px;
+            color: var(--accent);
+            margin-left: 4px;
+            position: absolute;
+            left: 100%;
+            top: -6px
+        }
+
+        .tick {
+            position: absolute;
+            left: calc(50% + 10px);
+            width: 18px;
+            height: 1px;
+            background: #5a6a80;
+            border-radius: 1px
+        }
+
+        .slider {
+            z-index: 3;
+            width: var(--fader-height);
+        }
+
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 33px;
+            height: 100%;
+            background: transparent;
+        }
+
+        input[type=range].vertical {
+            writing-mode: vertical-lr;
+            direction: rtl;
+            appearance: slider-vertical;
+            width: 33px;
+            vertical-align: bottom;
+        }
+
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: var(--thumb-size);
+            height: var(--thumb-size);
+            border-radius: 50%;
+            background: #fff;
+            box-shadow: 0 0 4px rgba(0, 0, 0, 0.5)
+        }
+
+        .pan-wrap {
+            margin-top: 10px;
+            width: 70%;
+            display: flex;
+            flex-direction: column;
+            align-items: center
+        }
+
+        .pan-label {
+            font-size: 12px;
+            color: #cfe8ff;
+            margin-bottom: 2px
+        }
+
+        .pan-val {
+            font-size: 12px;
+            color: #99b3c7;
+            margin-top: 2px;
+            height: 14px
+        }
+
+        .mute-btn {
+            margin-top: 10px;
+            padding: 4px 10px;
+            border-radius: 6px;
+            border: none;
+            background: #233041;
+            color: #eee;
+            font-size: 12px;
+            cursor: pointer
+        }
+
+        .mute-btn.active {
+            background: #a70000;
+            color: #fff
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app">
+        <header>
+            <h1>Uli Master 3216</h1>
+        </header>
+        <main class="mixer" id="mixer"></main>
+    </div>
+
+    <script>
+        const CHANNELS = 16;
+        const MIN_DB = -80;
+        const MAX_DB = 12;
+        // const TICKS = [-10, -20, -30, -40, -50, -60, -70]; 
+        const TICKS = [12, 6, 0, -6, -12, -24, -48, -80];
+
+        const COLORS = [
+            "#ff6b6b", "#ffa94d", "#f9c74f", "#90be6d", "#4d908e", "#577590", "#277da1", "#9d4edd",
+            "#f72585", "#7209b7", "#4361ee", "#4cc9f0", "#4895ef", "#560bad", "#70c1b3", "#e63946",
+            "#b3b359", "#59b3b3", "#a64d4d", "#4da64d", "#4d4da6", "#a64da6", "#a6a64d", "#4da6a6",
+            "#993333", "#339933", "#333399", "#993399", "#999933", "#339999", "#b36666", "#66b366",
+            "#66b3b3", "#b366b3", "#b3b366", "#66b3b3", "#804d4d", "#4d804d", "#4d4d80", "#804d80",
+            "#80804d", "#4d8080", "#996666", "#669966", "#666699", "#996699", "#999966", "#669999",
+            "#b38080", "#80b380", "#80b3b3", "#b380b3", "#b3b380", "#80b3b3", "#993d3d", "#3d993d",
+            "#3d3d99", "#993d99", "#99993d", "#3d9999", "#b35959", "#59b359", "#59b3b3", "#b359b3"
+        ];
+
+        function sysExValueToDb(sysExValue) {
+            return -80 + sysExValue / 16;
+        }
+
+        function dbToSysExValue(db) {
+            return (db + 80) * 16;
+        }
+
+        const tickValues = TICKS.map(db => dbToSysExValue(db));
+        const tickPositions = TICKS.map((_, i) => i / (TICKS.length - 1));
+      
+        function faderToValue(fader) {
+            const n = tickPositions.length;
+            const segment = Math.min(Math.floor(fader * (n - 1)), n - 2);
+            const t = (fader - tickPositions[segment]) / (tickPositions[segment + 1] - tickPositions[segment]);
+            const v0 = tickValues[segment];
+            const v1 = tickValues[segment + 1];
+            return v0 + t * (v1 - v0);
+          }
+          
+          function valueToFader(value) {
+            const n = tickValues.length;
+            let segment = 0;
+            for (let i = 0; i < n - 1; i++) {
+              if (value <= tickValues[i] && value >= tickValues[i + 1]) {
+                segment = i;
+                break;
+              }
+            }
+            const t = (value - tickValues[segment]) / (tickValues[segment + 1] - tickValues[segment]);
+            return tickPositions[segment] + t * (tickPositions[segment + 1] - tickPositions[segment]);
+          }
+
+        const container = document.getElementById('mixer');
+
+        function createChannel(i) {
+            const ch = document.createElement('div');
+            ch.className = 'channel';
+
+            const cb = document.createElement('div');
+            cb.className = 'colorbar';
+            cb.style.background = COLORS[i % COLORS.length];
+            ch.appendChild(cb);
+
+            const nameEdit = document.createElement('input');
+            nameEdit.className = 'name-edit';
+            nameEdit.value = '' + (i + 1);
+
+            const valTop = document.createElement('div');
+            valTop.className = 'value-top';
+            valTop.textContent = '+0.0';
+
+            const fwrap = document.createElement('div');
+            fwrap.className = 'fader-wrap';
+            const track = document.createElement('div');
+            track.className = 'track';
+            const fill = document.createElement('div');
+            fill.className = 'fill';
+            const marker0 = document.createElement('div');
+            marker0.className = 'marker0';
+
+            tickValues.forEach(t => {
+                const tk = document.createElement('div');
+                tk.className = 'tick';
+                tk.dataset.sysExValue = t;
+                fwrap.appendChild(tk);
+            });
+
+            const sliderWrap = document.createElement('div');
+            sliderWrap.className = 'slider';
+
+            const input = document.createElement('input');
+            input.className = 'vertical';
+            input.type = 'range';
+            input.orient = 'vertical';
+            input.min = 0;
+            input.max = 1472;
+            input.step = 1;
+            input.value = 0;
+            sliderWrap.appendChild(input);
+
+            fwrap.appendChild(track);
+            fwrap.appendChild(fill);
+            fwrap.appendChild(marker0);
+            fwrap.appendChild(sliderWrap);
+
+            const panWrap = document.createElement('div');
+            panWrap.className = 'pan-wrap';
+            const panLabel = document.createElement('div');
+            panLabel.className = 'pan-label';
+            panLabel.textContent = 'Pan';
+            const pan = document.createElement('input');
+            pan.type = 'range';
+            pan.min = -100;
+            pan.max = 100;
+            pan.value = 0;
+            pan.step = 1;
+            const panVal = document.createElement('div');
+            panVal.className = 'pan-val';
+            panVal.textContent = 'C';
+
+            pan.oninput = () => {
+                const v = parseInt(pan.value);
+                if (v === 0) panVal.textContent = 'C';
+                else if (v < 0) panVal.textContent = 'L' + Math.abs(v);
+                else panVal.textContent = 'R' + v;
+            };
+
+            panWrap.appendChild(panLabel);
+            panWrap.appendChild(pan);
+            panWrap.appendChild(panVal);
+
+            const muteBtn = document.createElement('button');
+            muteBtn.className = 'mute-btn';
+            muteBtn.textContent = 'Mute';
+            muteBtn.onclick = () => muteBtn.classList.toggle('active');
+
+            ch.appendChild(nameEdit);
+            ch.appendChild(valTop);
+            ch.appendChild(fwrap);
+            ch.appendChild(panWrap);
+            ch.appendChild(muteBtn);
+
+            function updateVisual() {
+                const v = parseFloat(input.value);
+                const db = sysExValueToDb(valueToFader(v) * 1472);
+                valTop.textContent = (db >= 0 ? '+' + db.toFixed(1) : db.toFixed(1)) + '';
+
+                const trackRect = track.getBoundingClientRect();
+                const h = trackRect.height;
+                // const pct = (v - MIN_DB) / (MAX_DB - MIN_DB);
+
+                const pct = valueToFader(v);
+
+                fill.style.height = (pct * h) + 'px';
+
+                const ratio0 = (MAX_DB - 0) / (MAX_DB - MIN_DB);
+                const y0 = ratio0 * h;
+                marker0.style.top = trackRect.top - fwrap.getBoundingClientRect().top + y0 + 'px';
+
+                Array.from(fwrap.querySelectorAll('.tick')).forEach(tk => {
+                    const sysExValue = parseFloat(tk.dataset.sysExValue);
+                    const r = sysExValue / 1472;
+                    const y = r * h;
+                    tk.style.top = trackRect.top - fwrap.getBoundingClientRect().top + y + 'px';
+                });
+            }
+
+            input.addEventListener('input', updateVisual);
+            window.addEventListener('resize', updateVisual);
+            setTimeout(updateVisual, 0);
+
+            return ch;
+        }
+
+        for (let i = 0; i < CHANNELS; i++)
+            container.appendChild(createChannel(i));
+    </script>
+</body>
+
+</html>
