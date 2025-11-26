@@ -10,6 +10,14 @@ function dbToSysExValue(db) {
   return (db + 80) * 16;
 }
 
+function sysExPanToNormalized(sysExValue) {
+  return sysExValue / 60
+}
+
+function normalizedPanToSysEx(value) {
+  return Math.round(value * 60);
+}
+
 function dbToNormalized(y) {
   y = -y + 12;
 
@@ -74,6 +82,8 @@ function onDocumentReady(callback) {
 
 function createFader(faderIndex, mixerContainer, faderTemplate) {
   let faderValue = dbToNormalized(0); // 0..1
+  let panValue = 0.5;
+
   let knobMouseOffset = 0;
 
   const fader = faderTemplate.content.cloneNode(true);
@@ -128,13 +138,27 @@ function createFader(faderIndex, mixerContainer, faderTemplate) {
     }
   }
 
+  let faderTapedTwice = false;
+
   function containerTouchStart(event) {
+    if (faderTapedTwice) {
+      faderTapedTwice = false;
+      changeFaderValue(dbToNormalized(0));
+      updateFader();
+      return;
+    } else {
+      faderTapedTwice = true;
+      setTimeout(function () {
+        faderTapedTwice = false;
+      }, 250);
+    }
+
     const knobRect = knob.getBoundingClientRect();
     const rect = event.target.getBoundingClientRect();
     let mouseY = (event.clientY == null && event.touches ? event.touches[0].clientY : event.clientY) - rect.top;
 
     const mouseOffset = parseFloat(knob.style.top) - mouseY;
-    
+
     if (!isNaN(mouseOffset) && Math.abs(mouseOffset) <= knobRect.height / 2) {
       knobMouseOffset = mouseOffset;
     }
@@ -148,7 +172,7 @@ function createFader(faderIndex, mixerContainer, faderTemplate) {
 
   function containerMouseMove(event) {
     const rect = event.target.getBoundingClientRect();
-    let mouseY = (event.clientY == null && event.touches ? event.touches[0].clientY : event.clientY) - rect.top;    
+    let mouseY = (event.clientY == null && event.touches ? event.touches[0].clientY : event.clientY) - rect.top;
 
     if (knobMouseOffset) {
       mouseY += knobMouseOffset;
@@ -192,11 +216,89 @@ function createFader(faderIndex, mixerContainer, faderTemplate) {
     updateFader();
   });
 
+  const secContainer = fader.querySelector(".sec-container");
+  const secOverlay = fader.querySelector(".sec-mouse-overlay");
+
+  const secSlideIndicator = fader.querySelector(".sec-slide-indicator");
+  const secValueIndicator = fader.querySelector(".sec-value-indicator");
+
+  function updateSecFader() {
+    const rect = secContainer.getBoundingClientRect();
+
+    secSlideIndicator.style.width = (100 * sysExPanToNormalized(normalizedPanToSysEx(panValue))) + "%";
+
+    let panDisplayed = normalizedPanToSysEx(panValue) - 30;
+
+    if (panDisplayed === 0) {
+      panDisplayed = "C";
+    } else if (panDisplayed < 0) {
+      panDisplayed = "L" + Math.abs(panDisplayed);
+    } else if (panDisplayed > 0) {
+      panDisplayed = "R" + Math.abs(panDisplayed);
+    }
+
+    secValueIndicator.innerHTML = panDisplayed;
+  }
+
+  function changePanValue(value) {
+    if (value > 1) {
+      value = 1;
+    } else if (value < 0) {
+      value = 0;
+    }
+
+    if (value !== faderValue) {
+      panValue = value;
+    }
+  }
+
+  let secTapedTwice = false;
+
+  function secOverlayMouseDown(event) {
+    if (secTapedTwice) {
+      secTapedTwice = false;
+      changePanValue(0.5);
+      updateSecFader();
+      return;
+    } else {
+      secTapedTwice = true;
+      setTimeout(function () {
+        secTapedTwice = false;
+      }, 250);
+    }
+
+    secOverlayMouseMove(event);
+  }
+
+  function secOverlayMouseMove(event) {
+    const rect = event.target.getBoundingClientRect();
+    let mouseX = (event.clientX == null && event.touches ? event.touches[0].clientX : event.clientX) - rect.left;
+
+    const positionX = mouseX / rect.width;
+
+    if (event.buttons || (event.touches && event.touches.length)) {
+      if (positionX >= 0 && positionX <= 1) {
+        changePanValue(positionX);
+        updateSecFader();
+      }
+    }
+  }
+
+  secOverlay.addEventListener("mousemove", secOverlayMouseMove);
+  secOverlay.addEventListener("mousedown", secOverlayMouseDown);
+  secOverlay.addEventListener("touchmove", secOverlayMouseMove);
+  secOverlay.addEventListener("touchstart", secOverlayMouseDown);
+
   mixerContainer.appendChild(fader);
 
-  updateFader();
+  function redraw() {
+    updateFader();
+    updateSecFader();
+  }
 
-  window.addEventListener("resize", updateFader);
+  redraw();
+
+  window.addEventListener("resize", redraw);
 }
 
 onDocumentReady(() => {
@@ -206,7 +308,7 @@ onDocumentReady(() => {
 
   // Disable context menu
   if (hasTouchSupport()) {
-    window.oncontextmenu = function(event) {
+    window.oncontextmenu = function (event) {
       event.preventDefault();
       event.stopPropagation();
       return false;
@@ -219,4 +321,12 @@ onDocumentReady(() => {
   for (let faderIndex = 0; faderIndex < NUMBER_OF_CHANNELS; faderIndex++) {
     createFader(faderIndex, mixerContainer, faderTemplate);
   }
+
+  document.querySelector(".fullscreen-icon").addEventListener("click", () => {
+    if (document.fullscreenElement) {
+      document.exitFullscreen();
+    } else {
+      document.querySelector(".app").requestFullscreen();
+    }
+  });
 });
