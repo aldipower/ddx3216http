@@ -45,13 +45,17 @@ header h1 {
 
 .colorbar {
   background: gray;
-
-  /* position: absolute; */
-  /* top: 0;
-  left: 0; */
   width: 100%;
   height: 6px;
   border-radius: 10px 10px 0 0;
+  opacity: 0.9
+}
+
+.colorbar.bottom {
+  background: gray;
+  width: 100%;
+  height: 6px;
+  border-radius: 0 0 10px 10px;
   opacity: 0.9
 }
 
@@ -70,6 +74,32 @@ header h1 {
 .fader-name-input:focus {
   outline: none;
   border-bottom: 1px solid #DDD;
+}
+
+.fine-tune {
+  display: flex;
+  flex-direction: row;
+}
+
+.fine-tune button {
+  flex-grow: 1;
+  background-color: transparent;
+  /* margin-top: 12px; */
+  padding-top: 12px;
+  padding-bottom: 12px;
+  margin-bottom: -8px;  
+  border-radius: 6px;
+  border: none;
+  color: #eee;
+  font-size: 12px;
+  cursor: pointer
+}
+
+.fine-tune .minus-btn {
+  margin-left: 8px;
+}
+.fine-tune .plus-btn {
+  margin-right: 8px;
 }
 
 .db-value-indicator {
@@ -116,10 +146,12 @@ header h1 {
   left: 0;
 
   z-index: 5;
+
+  cursor: pointer;
 }
 
 .fader-left-gap {
-  flex-grow: 1;
+  flex-grow: 2;
 }
 
 .fader-slide {
@@ -139,7 +171,7 @@ header h1 {
   margin-left: -8px;
   margin-top: -26px;
 
-  /* pointer-events: none; */
+  pointer-events: none;
 
   z-index: 3;
 }
@@ -224,4 +256,21 @@ header h1 {
   position: absolute;
   left: 100%;
   top: -6px;
+}
+
+.mute-btn {
+  margin-top: 10px;
+  margin-bottom: 10px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: none;
+  background: #233041;
+  color: #eee;
+  font-size: 12px;
+  cursor: pointer
+}
+
+.mute-btn.active {
+  background: #a70000;
+  color: #fff
 }

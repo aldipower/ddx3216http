@@ -73,7 +73,7 @@ function onDocumentReady(callback) {
 }
 
 function createFader(faderIndex, mixerContainer, faderTemplate) {
-  let faderValue = 0; // 0..1
+  let faderValue = dbToNormalized(0); // 0..1
   let knobMouseOffset = 0;
 
   const fader = faderTemplate.content.cloneNode(true);
@@ -81,8 +81,8 @@ function createFader(faderIndex, mixerContainer, faderTemplate) {
   const color = CHANNEL_COLORS[faderIndex];
 
   if (color != null) {
-    const colorbar = fader.querySelector(".colorbar");
-    colorbar.style.background = color;
+    fader.querySelector(".colorbar").style.background = color;
+    fader.querySelector(".colorbar.bottom").style.background = color;
   }
 
   const nameInput = fader.querySelector(".fader-name-input");
@@ -116,6 +116,18 @@ function createFader(faderIndex, mixerContainer, faderTemplate) {
     dbValueIndicator.innerHTML = (db < 0 ? "" : "+") + db.toFixed(2);
   }
 
+  function changeFaderValue(value) {
+    if (value > 1) {
+      value = 1;
+    } else if (value < 0) {
+      value = 0;
+    }
+
+    if (value !== faderValue) {
+      faderValue = value;
+    }
+  }
+
   function containerTouchStart(event) {
     const knobRect = knob.getBoundingClientRect();
     const rect = event.target.getBoundingClientRect();
@@ -135,8 +147,6 @@ function createFader(faderIndex, mixerContainer, faderTemplate) {
   }
 
   function containerMouseMove(event) {
-    console.log(" MOVE", knobMouseOffset)
-
     const rect = event.target.getBoundingClientRect();
     let mouseY = (event.clientY == null && event.touches ? event.touches[0].clientY : event.clientY) - rect.top;    
 
@@ -148,19 +158,45 @@ function createFader(faderIndex, mixerContainer, faderTemplate) {
 
     if (event.buttons || (event.touches && event.touches.length)) {
       if (positionY >= 0 && positionY <= 1 && positionY !== faderValue) {
-        faderValue = positionY;
+        changeFaderValue(positionY);
         updateFader();
       }
     }
   }
 
+  faderOverlay.addEventListener("mousedown", containerTouchStart);
+  faderOverlay.addEventListener("mouseup", containerTouchEnd);
+  faderOverlay.addEventListener("mouseout", containerTouchEnd);
   faderOverlay.addEventListener("mousemove", containerMouseMove);
   faderOverlay.addEventListener("touchmove", containerMouseMove);
   faderOverlay.addEventListener("touchstart", containerTouchStart);
   faderOverlay.addEventListener("touchend", containerTouchEnd);
 
-  
+  const muteButton = fader.querySelector(".mute-btn");
+
+  const handleMuteButtonClick = function (event) {
+    muteButton.classList.toggle('active');
+  }
+
+  muteButton.addEventListener("click", handleMuteButtonClick);
+
+  const minusButton = fader.querySelector(".minus-btn");
+  const plusButton = fader.querySelector(".plus-btn");
+
+  minusButton.addEventListener("click", function (event) {
+    changeFaderValue(dbToNormalized(normalizedToDb(faderValue) - 0.1));
+    updateFader();
+  });
+  plusButton.addEventListener("click", function (event) {
+    changeFaderValue(dbToNormalized(normalizedToDb(faderValue) + 0.1));
+    updateFader();
+  });
+
   mixerContainer.appendChild(fader);
+
+  updateFader();
+
+  window.addEventListener("resize", updateFader);
 }
 
 onDocumentReady(() => {
