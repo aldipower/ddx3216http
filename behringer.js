@@ -21,6 +21,8 @@ var Channel = function (channel_number, connection) {
     this.channel = channel_number - 1;
     this.connection = connection;
     this.volume_db = -80;
+    this.mute = 0;
+    this.pan_db = 0;
     this.aux = [
         {db: -80, pre: false},
         {db: -80, pre: false},
@@ -60,6 +62,26 @@ Channel.prototype.getVolume = function() {
    return this.volume_db;
 }
 
+Channel.prototype.setMute = function(value) {
+    this.mute = value;
+    var sysex = this.paramChange(2, Number(value));
+    this.connection.sendCommand(sysex);
+}
+
+Channel.prototype.getMute = function() {
+    return this.mute;
+}
+
+Channel.prototype.setPan = function(dB) {
+    this.pan_db = dB;
+    var sysex = this.paramChange(3, Math.round(Number(dB) + 30));
+    this.connection.sendCommand(sysex);
+}
+
+Channel.prototype.getPan = function() {
+    return this.pan_db;
+}
+
 Channel.prototype.fullrangeValue = function(db_fraction) {
     var unboundedValue = Math.round((db_fraction + 80) * 16);
     // clamp to 0-1472
@@ -87,6 +109,16 @@ Channel.prototype.setFromMidi = function(param, high, low) {
             this.volume_db = db;
             debug("Channel", this.channel, "set volume", db, "dB");
             this.emitMidiEvent('vol', undefined, db);
+            break;
+        case 2: // mute
+            this.mute = rawValue;
+            debug("Channel", this.channel, "set mute", rawValue);
+            this.emitMidiEvent('mute', undefined, rawValue);
+            break;
+        case 3: // pan
+            this.pan_db = -30 + rawValue;
+            debug("Channel", this.channel, "set pan", this.pan_db);
+            this.emitMidiEvent('pan', undefined, this.pan_db);
             break;
         case 70:
         case 72:
@@ -163,7 +195,7 @@ Behringer.prototype.forwardChannelEvent = function(type, param) {
 
 Behringer.prototype.createChannels = function() {
     this.channels = [];
-    for (var channel_number = 1; channel_number < 33; channel_number++) {
+    for (var channel_number = 1; channel_number < 65; channel_number++) {
         this.channels[channel_number] = new Channel(channel_number, this);
         this.channels[channel_number].events.on('*', this.eventForward);
     }

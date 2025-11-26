@@ -60,8 +60,18 @@ io.on('connection', function(socket){
   });
   socket.on('vol', function (message) {
       var cmd = JSON.parse(message);
-      debug("Ch", cmd.channel, "@", cmd.value);
+      debug("Ch", cmd.channel, "@ vol", cmd.value);
       desk.channel(cmd.channel).setVolume(cmd.value);
+  });
+  socket.on('mute', function (message) {
+      var cmd = JSON.parse(message);
+      debug("Ch", cmd.channel, "@ mute", cmd.value);
+      desk.channel(cmd.channel).setMute(cmd.value);
+  });
+  socket.on('pan', function (message) {
+      var cmd = JSON.parse(message);
+      debug("Ch", cmd.channel, "@ pan", cmd.value);
+      desk.channel(cmd.channel).setPan(cmd.value);
   });
   socket.on('get', function (message, cb) {
       var cmd = JSON.parse(message);
@@ -70,6 +80,12 @@ io.on('connection', function(socket){
       switch (cmd.setting) {
           case "vol":
               cb(channel.getVolume());
+              break;
+          case "mute":
+              cb(channel.getMute());
+              break;
+          case "pan":
+              cb(channel.getPan());
               break;
           case "aux":
               cb(channel.getAuxSend(cmd.parameter));

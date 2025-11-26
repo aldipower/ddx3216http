@@ -1,14 +1,20 @@
+const sockIO = io();
+
 const faderTicks = [12, 6, 0, -6, -12, -24, -48, -60, -80];
 const minDb = -80;
 const maxDb = 12;
 
-function sysExValueToDb(sysExValue) {
-  return -80 + sysExValue / 16;
+function hasTouchSupport() {
+  return 'ontouchstart' in window || navigator.maxTouchPoints > 0;
 }
 
-function dbToSysExValue(db) {
-  return (db + 80) * 16;
-}
+// function sysExValueToDb(sysExValue) {
+//   return -80 + sysExValue / 16;
+// }
+
+// function dbToSysExValue(db) {
+//   return (db + 80) * 16;
+// }
 
 function sysExPanToNormalized(sysExValue) {
   return sysExValue / 60
@@ -95,17 +101,17 @@ function createFader(faderIndex, mixerContainer, faderTemplate) {
     fader.querySelector(".colorbar.bottom").style.background = color;
   }
 
-  const faderName = localStorage.getItem("faderName"+faderIndex) || "";
+  const faderName = localStorage.getItem("faderName" + faderIndex) || "";
 
   const nameInput = fader.querySelector(".fader-name-input");
   nameInput.value = faderName === "" ? "" + (faderIndex + 1) : faderName;
 
   nameInput.addEventListener("change", () => {
     if (nameInput.value === "") {
-      nameInput.value = faderIndex+1+"";
+      nameInput.value = faderIndex + 1 + "";
     }
 
-    localStorage.setItem("faderName"+faderIndex, nameInput.value);
+    localStorage.setItem("faderName" + faderIndex, nameInput.value);
   });
 
   const dbValueIndicator = fader.querySelector(".db-value-indicator");
@@ -145,12 +151,23 @@ function createFader(faderIndex, mixerContainer, faderTemplate) {
 
     if (value !== faderValue) {
       faderValue = value;
+      sockIO.emit("vol",
+        JSON.stringify({
+          "channel": faderIndex + 1,
+          "parameter": "",
+          "value": normalizedToDb(faderValue),
+        })
+      );
     }
   }
 
   let faderTapedTwice = false;
 
   function containerTouchStart(event) {
+    if (hasTouchSupport() && event.clientX) {
+      return;
+    }
+
     if (event.clientX != null) {
       if (faderTapedTwice) {
         faderTapedTwice = false;
@@ -212,6 +229,14 @@ function createFader(faderIndex, mixerContainer, faderTemplate) {
 
   const handleMuteButtonClick = function (event) {
     muteButton.classList.toggle('active');
+
+    sockIO.emit("mute",
+      JSON.stringify({
+        "channel": faderIndex + 1,
+        "parameter": "",
+        "value": muteButton.classList.contains("active") ? 1 : 0,
+      })
+    );
   }
 
   muteButton.addEventListener("click", handleMuteButtonClick);
@@ -261,6 +286,14 @@ function createFader(faderIndex, mixerContainer, faderTemplate) {
 
     if (value !== faderValue) {
       panValue = value;
+
+      sockIO.emit("pan",
+        JSON.stringify({
+          "channel": faderIndex + 1,
+          "parameter": "",
+          "value": normalizedPanToSysEx(panValue) - 30,
+        })
+      );
     }
   }
 
@@ -315,13 +348,75 @@ function createFader(faderIndex, mixerContainer, faderTemplate) {
   redraw();
 
   window.addEventListener("resize", redraw);
+
+  function setVol(db) {
+    faderValue = dbToNormalized(db);
+    updateFader();
+  }
+
+  function setMute(muted) {
+    if (muted) {
+      if (!muteButton.classList.contains("active")) {
+        muteButton.classList.add("active");
+      }
+    } else {
+      if (muteButton.classList.contains("active")) {
+        muteButton.classList.remove("active");
+      }
+    }
+  }
+
+  function setPan(db) {
+    panValue = sysExPanToNormalized(db + 30);
+    updateSecFader();
+  }
+
+  sockIO.on('connect', function () {
+    const volume = JSON.stringify({
+      "channel": faderIndex + 1,
+      "setting": "vol",
+      "parameter": ""
+    });
+
+    sockIO.emit("get", volume, setVol);
+
+    const mute = JSON.stringify({
+      "channel": faderIndex + 1,
+      "setting": "mute",
+      "parameter": ""
+    });
+
+    sockIO.emit("get", mute, setMute);
+
+    const pan = JSON.stringify({
+      "channel": faderIndex + 1,
+      "setting": "pan",
+      "parameter": ""
+    });
+
+    sockIO.emit("get", pan, setPan);
+  });
+
+  sockIO.on('midi', function (msg) {
+    if (msg.channelNumber == null || msg.channelNumber - 1 !== faderIndex) {
+      return;
+    }
+
+    console.log("Midi from Desk", msg);
+
+    const type = msg.setting;
+
+    if (type === "vol") {
+      setVol(msg.value);
+    } else if (type === "mute") {
+      setMute(msg.value);
+    } else if (type === "pan") {
+      setPan(msg.value);
+    }
+  });
 }
 
 onDocumentReady(() => {
-  function hasTouchSupport() {
-    return 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-  }
-
   // Disable context menu
   if (hasTouchSupport()) {
     window.oncontextmenu = function (event) {
@@ -330,6 +425,23 @@ onDocumentReady(() => {
       return false;
     };
   }
+
+  sockIO.on('connect', function () {
+    // sockIO.on('midi', function (msg) {
+    //   console.log("Midi from Desk", msg);
+    //   var selector = ".channel-strip[data-event=" + msg.setting + "]";
+    //   if (msg.parameter !== undefined) {
+    //     selector += "[data-parameter=" + msg.parameter + "]";
+    //   }
+    //   var slider = $(selector + " .fader[data-channel=" + msg.channelNumber + "]");
+    //   if (slider.length < 1) {
+    //     console.log("Looks like we're not showing channel", msg.channelNumber, " event ", msg.setting, "param", msg.parameter);
+    //     return;
+    //   }
+    //   slider.slider("setValue", msg.value);
+    // });
+
+  });
 
   const mixerContainer = document.querySelector("#mixer");
   const faderTemplate = document.querySelector("#fader");

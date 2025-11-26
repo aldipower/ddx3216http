@@ -14,7 +14,8 @@ body, html {
 
 .app {
   padding: 18px;
-  height: 100%;
+  padding-bottom: 0;
+  height: 97%;
 
   background: black;
 }
