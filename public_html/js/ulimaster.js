@@ -95,8 +95,18 @@ function createFader(faderIndex, mixerContainer, faderTemplate) {
     fader.querySelector(".colorbar.bottom").style.background = color;
   }
 
+  const faderName = localStorage.getItem("faderName"+faderIndex) || "";
+
   const nameInput = fader.querySelector(".fader-name-input");
-  nameInput.value = "" + (faderIndex + 1);
+  nameInput.value = faderName === "" ? "" + (faderIndex + 1) : faderName;
+
+  nameInput.addEventListener("change", () => {
+    if (nameInput.value === "") {
+      nameInput.value = faderIndex+1+"";
+    }
+
+    localStorage.setItem("faderName"+faderIndex, nameInput.value);
+  });
 
   const dbValueIndicator = fader.querySelector(".db-value-indicator");
 
@@ -141,16 +151,18 @@ function createFader(faderIndex, mixerContainer, faderTemplate) {
   let faderTapedTwice = false;
 
   function containerTouchStart(event) {
-    if (faderTapedTwice) {
-      faderTapedTwice = false;
-      changeFaderValue(dbToNormalized(0));
-      updateFader();
-      return;
-    } else {
-      faderTapedTwice = true;
-      setTimeout(function () {
+    if (event.clientX != null) {
+      if (faderTapedTwice) {
         faderTapedTwice = false;
-      }, 250);
+        changeFaderValue(dbToNormalized(0));
+        updateFader();
+        return;
+      } else {
+        faderTapedTwice = true;
+        setTimeout(function () {
+          faderTapedTwice = false;
+        }, 250);
+      }
     }
 
     const knobRect = knob.getBoundingClientRect();
@@ -255,6 +267,10 @@ function createFader(faderIndex, mixerContainer, faderTemplate) {
   let secTapedTwice = false;
 
   function secOverlayMouseDown(event) {
+    if (event.clientX == null) {
+      return;
+    }
+
     if (secTapedTwice) {
       secTapedTwice = false;
       changePanValue(0.5);
