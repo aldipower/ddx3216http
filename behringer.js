@@ -105,7 +105,7 @@ Channel.prototype.setFromMidi = function(param, high, low) {
     var rawValue = (high << 7) | low;
     switch(param) {
         case 1: // volume
-            var db = Math.round((rawValue / 16) - 80);
+            var db = (rawValue / 16) - 80;
             this.volume_db = db;
             debug("Channel", this.channel, "set volume", db, "dB");
             this.emitMidiEvent('vol', undefined, db);
@@ -125,7 +125,7 @@ Channel.prototype.setFromMidi = function(param, high, low) {
         case 74:
         case 76:
             var aux = (param - 70) / 2;
-            var db = Math.round((rawValue / 16) - 80);
+            var db = (rawValue / 16) - 80;
             this.aux[aux].db = db;
             debug("Channel", this.channel, "set aux", aux, "send", this.aux[aux].db, "dB");
             this.emitMidiEvent('aux', aux, db);
