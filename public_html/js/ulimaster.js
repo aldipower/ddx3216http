@@ -4,6 +4,9 @@ const faderTicks = [12, 6, 0, -6, -12, -24, -48, -60, -80];
 const minDb = -80;
 const maxDb = 12;
 
+const faders = []
+let selectedPageNo = parseInt(localStorage.getItem("selectedPageNo") || 1, 10);
+
 function hasTouchSupport() {
   return 'ontouchstart' in window || navigator.maxTouchPoints > 0;
 }
@@ -328,8 +331,6 @@ function createFader(faderIndex, mixerContainer, faderTemplate) {
   secOverlay.addEventListener("touchmove", secOverlayMouseMove);
   secOverlay.addEventListener("touchstart", secOverlayMouseDown);
 
-  mixerContainer.appendChild(fader);
-
   function redraw() {
     updateFader();
     updateSecFader();
@@ -404,6 +405,33 @@ function createFader(faderIndex, mixerContainer, faderTemplate) {
       setPan(msg.value);
     }
   });
+
+  mixerContainer.appendChild(fader);
+  faders[faderIndex] = {
+    fader,
+    redraw,
+  };
+}
+
+function redrawPage(mixerContainer) {
+  const buttonList = document.querySelectorAll(".page-btn")
+  buttonList.forEach((btn) => {
+    btn.classList.remove("active");
+  });
+  buttonList[selectedPageNo - 1].classList.add("active");
+
+  const faderList = mixerContainer.children;
+
+  for (let faderIndex = 0; faderIndex < 64; faderIndex++) {
+    if (faderIndex >= 16 * (selectedPageNo - 1) && faderIndex <= 16 * selectedPageNo-1) {
+      faderList[faderIndex].style.display = "flex";
+      requestAnimationFrame(() => {
+        faders[faderIndex].redraw();
+      });
+    } else {
+      faderList[faderIndex].style.display = "none";
+    }
+  }
 }
 
 onDocumentReady(() => {
@@ -419,9 +447,19 @@ onDocumentReady(() => {
   const mixerContainer = document.querySelector("#mixer");
   const faderTemplate = document.querySelector("#fader");
 
-  for (let faderIndex = 0; faderIndex < NUMBER_OF_CHANNELS; faderIndex++) {
+  for (let faderIndex = 0; faderIndex < 64; faderIndex++) {
     createFader(faderIndex, mixerContainer, faderTemplate);
   }
+
+  redrawPage(mixerContainer);
+
+  document.querySelectorAll(".page-btn").forEach((button) => {
+    button.addEventListener("click", () => {
+      selectedPageNo = parseInt(button.dataset.page, 10);
+      localStorage.setItem("selectedPageNo", selectedPageNo);
+      redrawPage(mixerContainer);
+    });
+  })
 
   document.querySelector(".fullscreen-icon").addEventListener("click", () => {
     if (document.fullscreenElement) {

@@ -8,7 +8,6 @@
   <link rel="stylesheet" href="css/ulimaster.css">
   <style></style>
   <script>
-    const NUMBER_OF_CHANNELS = 16;
     const CHANNEL_COLORS = [
       "#ff6b6b", "#ffa94d", "#f9c74f", "#90be6d", "#4d908e", "#577590", "#277da1", "#9d4edd",
       "#f72585", "#7209b7", "#4361ee", "#4cc9f0", "#4895ef", "#560bad", "#70c1b3", "#e63946",
@@ -26,6 +25,12 @@
   <div class="app">
     <header>
         <h1>Uli Master 3216</h1>
+        <div class="page-buttons">
+          <button class="page-btn" data-page="1">Ch 1-16</button>
+          <button class="page-btn" data-page="2">Ch 17-32</button>
+          <button class="page-btn" data-page="3">Bus 1-16</button>
+          <button class="page-btn" data-page="4">Aux/FX</button>
+        </div>
         <img src="expand.svg" width="28" height="28" class="fullscreen-icon">
     </header>
     <main class="mixer" id="mixer">

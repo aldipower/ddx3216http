@@ -30,12 +30,39 @@ header {
 
 header h1 {
   margin: 0;
-  font-size: 18px
+  font-size: 18px;
+  margin-right: 24px;
 }
 
 header .fullscreen-icon {
   cursor: pointer;
 }
+
+header .page-buttons {
+  flex-grow: 2;
+}
+
+header .page-btn {
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: none;
+  background: #233041;
+  color: #eee;
+  font-size: 12px;
+  cursor: pointer
+}
+
+header .page-btn.active {
+  background: #a70000;
+  color: #fff
+}
+
+/* .mute-btn {
+  margin-top: 10px;
+  margin-bottom: 10px;
+  padding: 4px 10px;
+} */
+
 
 .mixer {
   height: 90%;
@@ -47,8 +74,10 @@ header .fullscreen-icon {
 }
 
 .fader {
+  display: none;
+  /* display: flex; */
+
   width: 100%;
-  display: flex;
   flex-direction: column;
 
   background: #071827;
