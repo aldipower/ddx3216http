@@ -105,7 +105,7 @@ io.on('connection', function(socket){
 desk.ping();
 desk.events.on('midi', function(param) {
     var ch = param.channel.channel+1;
-    debug('Forward Midi to Web: ', ch);
+    debug('Forward Midi to Web: ', ch, param.setting, param.parameter, param.value);
     var parameter = param.parameter;
     if (parameter !== undefined) {
         parameter += 1;

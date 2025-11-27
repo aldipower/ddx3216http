@@ -447,6 +447,8 @@ function createFader(faderIndex, mixerContainer, faderTemplate) {
       return;
     }
 
+    console.log("midi received on ", faderIndex, msg);
+
     const type = msg.setting;
 
     if (type === "vol") {
@@ -455,6 +457,10 @@ function createFader(faderIndex, mixerContainer, faderTemplate) {
       setMute(msg.value);
     } else if (type === "pan") {
       setPan(msg.value);
+    } else if (type === "aux") {
+      setAux(msg.value, msg.parameter);
+    } else if (type === "fx") {
+      setFx(msg.value, msg.parameter);
     }
   });
 
