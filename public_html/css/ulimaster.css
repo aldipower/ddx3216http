@@ -377,6 +377,13 @@ header .sectype-btn::first-letter {
   text-transform: capitalize;
 }
 
+.secondary-function.disabled {
+  cursor: none;
+  pointer-events: none;
+
+  filter: brightness(0.4);
+}
+
 .mute-btn {
   margin-top: 10px;
   margin-bottom: 10px;

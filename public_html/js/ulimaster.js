@@ -259,6 +259,12 @@ function createFader(faderIndex, mixerContainer, faderTemplate) {
     updateFader();
   });
 
+  const secFunction = fader.querySelector(".secondary-function");
+
+  if (faderIndex >= 32 && faderIndex < 32+16+8) {
+    secFunction.classList.add("disabled");
+  }
+
   const secOverlay = fader.querySelector(".sec-mouse-overlay");
 
   const secSlideIndicator = fader.querySelector(".sec-slide-indicator");
@@ -287,6 +293,16 @@ function createFader(faderIndex, mixerContainer, faderTemplate) {
     }
 
     secValueIndicator.innerHTML = "<span>" + currentSecType + "</span><br>" + displayValue;
+
+    if (faderIndex >= 56 && faderIndex < 64) {
+      if (currentSecType.startsWith("fx")) {
+        if (!secFunction.classList.contains("disabled")) {
+          secFunction.classList.add("disabled");
+        }
+      } else {
+        secFunction.classList.remove("disabled");
+      }
+    }
   }
 
   function changeSecValue(value) {
@@ -447,7 +463,7 @@ function createFader(faderIndex, mixerContainer, faderTemplate) {
       return;
     }
 
-    console.log("midi received on ", faderIndex, msg);
+    // console.log("midi received on ", faderIndex, msg);
 
     const type = msg.setting;
 

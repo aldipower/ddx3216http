@@ -10,6 +10,23 @@ var toHexString = function(intArray) {
 const ALL_DEVICES = 0x60;
 const PARAMETER_CHANGE = 0x20;
 
+function getDefaultVolume(channel_number) {
+    if (channel_number >= 33 && channel_number <= 48) {
+        return 0;
+    }
+    if (channel_number >= 49 && channel_number <= 52) {
+        return -80;
+    }
+    if (channel_number >= 53 && channel_number <= 56) {
+        return 0;
+    }
+    if (channel_number >= 57 && channel_number <= 64) {
+        return -12;
+    }
+
+    return -80;
+}
+
 /**
  * 
  * @param {number} channel_number
@@ -20,7 +37,7 @@ var Channel = function (channel_number, connection) {
     this.events = Mitt();
     this.channel = channel_number - 1;
     this.connection = connection;
-    this.volume_db = -80;
+    this.volume_db = getDefaultVolume(channel_number);
     this.mute = 0;
     this.pan_db = 0;
     this.aux = [
