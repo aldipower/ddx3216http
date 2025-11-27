@@ -173,7 +173,6 @@ function createFader(faderIndex, mixerContainer, faderTemplate) {
 
   function containerTouchStart(event) {
     if (hasTouchSupport() && event.buttons) {
-      console.log(faderIndex, event.touches, event.buttons)
       return;
     }
 
@@ -300,12 +299,22 @@ function createFader(faderIndex, mixerContainer, faderTemplate) {
     if (value !== secValues[currentSecType]) {
       secValues[currentSecType] = value;
 
-      if (changeSecValue === "pan") {
+      if (currentSecType === "pan") {
         sockIO.emit("pan",
           JSON.stringify({
             "channel": faderIndex + 1,
             "parameter": "",
             "value": normalizedPanToSysEx(value) - 30,
+          })
+        );
+      } else {
+        const type = currentSecType.startsWith("aux") ? "aux" : "fx";
+
+        sockIO.emit(type,
+          JSON.stringify({
+            "channel": faderIndex + 1,
+            "parameter": currentSecType.substring(type.length),
+            "value": normalizedToDb(value) ,
           })
         );
       }
@@ -384,6 +393,16 @@ function createFader(faderIndex, mixerContainer, faderTemplate) {
     updateSecFader();
   }
 
+  function setAux(db, parameter) {
+    secValues["aux"+parameter] = dbToNormalized(db);
+    updateSecFader();
+  }
+
+  function setFx(db, parameter) {
+    secValues["fx"+parameter] = dbToNormalized(db);
+    updateSecFader();
+  }
+
   sockIO.on('connect', function () {
     const volume = JSON.stringify({
       "channel": faderIndex + 1,
@@ -408,14 +427,25 @@ function createFader(faderIndex, mixerContainer, faderTemplate) {
     });
 
     sockIO.emit("get", pan, setPan);
+
+    for (let i=1;i<=4;i++) {
+      sockIO.emit("get", JSON.stringify({
+        "channel": faderIndex + 1,
+        "setting": "aux",
+        "parameter": i
+      }), setAux);
+      sockIO.emit("get", JSON.stringify({
+        "channel": faderIndex + 1,
+        "setting": "fx",
+        "parameter": i
+      }), setFx);
+    }
   });
 
   sockIO.on('midi', function (msg) {
     if (msg.channelNumber == null || msg.channelNumber - 1 !== faderIndex) {
       return;
     }
-
-    console.log("Midi from Desk", msg);
 
     const type = msg.setting;
 

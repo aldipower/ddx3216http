@@ -58,6 +58,11 @@ io.on('connection', function(socket){
       debug("Ch", cmd.channel, "Aux", cmd.parameter, "@", cmd.value);
       desk.channel(cmd.channel).setAuxSend(cmd.parameter, cmd.value);
   });
+  socket.on('fx', function (message) {
+      var cmd = JSON.parse(message);
+      debug("Ch", cmd.channel, "Fx", cmd.parameter, "@", cmd.value);
+      desk.channel(cmd.channel).setFxSend(cmd.parameter, cmd.value);
+  });
   socket.on('vol', function (message) {
       var cmd = JSON.parse(message);
       debug("Ch", cmd.channel, "@ vol", cmd.value);
@@ -88,7 +93,10 @@ io.on('connection', function(socket){
               cb(channel.getPan());
               break;
           case "aux":
-              cb(channel.getAuxSend(cmd.parameter));
+              cb(channel.getAuxSend(cmd.parameter), cmd.parameter);
+              break;
+          case "fx":
+              cb(channel.getFxSend(cmd.parameter), cmd.parameter);
               break;
       }
   });

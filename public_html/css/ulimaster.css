@@ -65,7 +65,9 @@ header .sectype-btn {
   background: #233041;
   color: #eee;
   font-size: 12px;
-  cursor: pointer
+  cursor: pointer;
+
+  min-width: 64px;
 }
 
 header .sectype-btn::first-letter {
