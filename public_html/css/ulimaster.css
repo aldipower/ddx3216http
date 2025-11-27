@@ -42,7 +42,7 @@ header .fullscreen-icon {
 
   display: grid;
   column-gap: 4px;
-  grid-template-columns: repeat(16, minmax(74px, 1fr));
+  grid-template-columns: repeat(16, minmax(48px, 1fr));
 
 }
 
@@ -50,8 +50,6 @@ header .fullscreen-icon {
   width: 100%;
   display: flex;
   flex-direction: column;
-  /* flex: 1 1 74px;
-  max-width: 74px; */
 
   background: #071827;
 }
@@ -272,7 +270,7 @@ header .fullscreen-icon {
 }
 
 .secondary-function {
-  margin-top: 28px;
+  margin-top: 14px;
   display: flex;
   flex-direction: column;
   width: 90%;
@@ -286,6 +284,8 @@ header .fullscreen-icon {
   width: 100%;
 
   user-select: none;
+
+  margin-bottom: 8px;
 }
 
 .sec-slide {
@@ -319,6 +319,7 @@ header .fullscreen-icon {
 
 .sec-value-indicator {
   margin-top: 8px;
+  margin-bottom: 8px;
   width: 100%;
   text-align: center;
 

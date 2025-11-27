@@ -8,14 +8,6 @@ function hasTouchSupport() {
   return 'ontouchstart' in window || navigator.maxTouchPoints > 0;
 }
 
-// function sysExValueToDb(sysExValue) {
-//   return -80 + sysExValue / 16;
-// }
-
-// function dbToSysExValue(db) {
-//   return (db + 80) * 16;
-// }
-
 function sysExPanToNormalized(sysExValue) {
   return sysExValue / 60
 }
@@ -31,10 +23,10 @@ function dbToNormalized(y) {
 
   if (y < sequence[0]) {
     y = sequence[0];
-  }
-  if (y > sequence[sequence.length - 1]) {
+  } else if (y > sequence[sequence.length - 1]) {
     y = sequence[sequence.length - 1];
   }
+
   let lowerIndex = 0;
   let upperIndex = 0;
 
@@ -59,8 +51,7 @@ function normalizedToDb(x) {
 
   if (x < 0) {
     x = 0
-  };
-  if (x > 1) {
+  } else if (x > 1) {
     x = 1
   };
 
@@ -164,22 +155,21 @@ function createFader(faderIndex, mixerContainer, faderTemplate) {
   let faderTapedTwice = false;
 
   function containerTouchStart(event) {
-    if (hasTouchSupport() && event.clientX) {
+    if (hasTouchSupport() && event.buttons) {
+      console.log(faderIndex, event.touches, event.buttons)
       return;
     }
 
-    if (event.clientX != null) {
-      if (faderTapedTwice) {
+    if (faderTapedTwice) {
+      faderTapedTwice = false;
+      changeFaderValue(dbToNormalized(0));
+      updateFader();
+      return;
+    } else {
+      faderTapedTwice = true;
+      setTimeout(function () {
         faderTapedTwice = false;
-        changeFaderValue(dbToNormalized(0));
-        updateFader();
-        return;
-      } else {
-        faderTapedTwice = true;
-        setTimeout(function () {
-          faderTapedTwice = false;
-        }, 250);
-      }
+      }, 250);
     }
 
     const knobRect = knob.getBoundingClientRect();
@@ -425,23 +415,6 @@ onDocumentReady(() => {
       return false;
     };
   }
-
-  sockIO.on('connect', function () {
-    // sockIO.on('midi', function (msg) {
-    //   console.log("Midi from Desk", msg);
-    //   var selector = ".channel-strip[data-event=" + msg.setting + "]";
-    //   if (msg.parameter !== undefined) {
-    //     selector += "[data-parameter=" + msg.parameter + "]";
-    //   }
-    //   var slider = $(selector + " .fader[data-channel=" + msg.channelNumber + "]");
-    //   if (slider.length < 1) {
-    //     console.log("Looks like we're not showing channel", msg.channelNumber, " event ", msg.setting, "param", msg.parameter);
-    //     return;
-    //   }
-    //   slider.slider("setValue", msg.value);
-    // });
-
-  });
 
   const mixerContainer = document.querySelector("#mixer");
   const faderTemplate = document.querySelector("#fader");
