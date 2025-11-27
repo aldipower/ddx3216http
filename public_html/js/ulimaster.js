@@ -7,6 +7,9 @@ const maxDb = 12;
 const faders = []
 let selectedPageNo = parseInt(localStorage.getItem("selectedPageNo") || 1, 10);
 
+let currentSecType = localStorage.getItem("currentSecType") || "pan";
+const secTypes = ["pan", "aux1", "aux2", "aux3", "aux4", "fx1", "fx2", "fx3", "fx4"];
+
 function hasTouchSupport() {
   return 'ontouchstart' in window || navigator.maxTouchPoints > 0;
 }
@@ -82,7 +85,18 @@ function onDocumentReady(callback) {
 
 function createFader(faderIndex, mixerContainer, faderTemplate) {
   let faderValue = dbToNormalized(0); // 0..1
-  let panValue = 0.5;
+
+  const secValues = {
+    pan: 0.5,
+    aux1: 0,
+    aux2: 0,
+    aux3: 0,
+    aux4: 0,
+    fx1: 0,
+    fx2: 0,
+    fx3: 0,
+    fx4: 0,
+  };
 
   let knobMouseOffset = 0;
 
@@ -246,47 +260,55 @@ function createFader(faderIndex, mixerContainer, faderTemplate) {
     updateFader();
   });
 
-  const secContainer = fader.querySelector(".sec-container");
   const secOverlay = fader.querySelector(".sec-mouse-overlay");
 
   const secSlideIndicator = fader.querySelector(".sec-slide-indicator");
   const secValueIndicator = fader.querySelector(".sec-value-indicator");
 
   function updateSecFader() {
-    const rect = secContainer.getBoundingClientRect();
+    const value = secValues[currentSecType];
+    let displayValue = "";
 
-    secSlideIndicator.style.width = (100 * sysExPanToNormalized(normalizedPanToSysEx(panValue))) + "%";
+    if (currentSecType === "pan") {
+      secSlideIndicator.style.width = (100 * sysExPanToNormalized(normalizedPanToSysEx(value))) + "%";
 
-    let panDisplayed = normalizedPanToSysEx(panValue) - 30;
+      displayValue = normalizedPanToSysEx(value) - 30;
+  
+      if (displayValue === 0) {
+        displayValue = "C";
+      } else if (displayValue < 0) {
+        displayValue = "L" + Math.abs(displayValue);
+      } else if (displayValue > 0) {
+        displayValue = "R" + Math.abs(displayValue);
+      }
+    } else {
+      secSlideIndicator.style.width = (100 * value) + "%";
 
-    if (panDisplayed === 0) {
-      panDisplayed = "C";
-    } else if (panDisplayed < 0) {
-      panDisplayed = "L" + Math.abs(panDisplayed);
-    } else if (panDisplayed > 0) {
-      panDisplayed = "R" + Math.abs(panDisplayed);
+      displayValue = normalizedToDb(value).toFixed(1);
     }
 
-    secValueIndicator.innerHTML = panDisplayed;
+    secValueIndicator.innerHTML = "<span>" + currentSecType + "</span><br>" + displayValue;
   }
 
-  function changePanValue(value) {
+  function changeSecValue(value) {
     if (value > 1) {
       value = 1;
     } else if (value < 0) {
       value = 0;
     }
 
-    if (value !== faderValue) {
-      panValue = value;
+    if (value !== secValues[currentSecType]) {
+      secValues[currentSecType] = value;
 
-      sockIO.emit("pan",
-        JSON.stringify({
-          "channel": faderIndex + 1,
-          "parameter": "",
-          "value": normalizedPanToSysEx(panValue) - 30,
-        })
-      );
+      if (changeSecValue === "pan") {
+        sockIO.emit("pan",
+          JSON.stringify({
+            "channel": faderIndex + 1,
+            "parameter": "",
+            "value": normalizedPanToSysEx(value) - 30,
+          })
+        );
+      }
     }
   }
 
@@ -299,7 +321,7 @@ function createFader(faderIndex, mixerContainer, faderTemplate) {
 
     if (secTapedTwice) {
       secTapedTwice = false;
-      changePanValue(0.5);
+      changeSecValue(currentSecType === "pan" ? 0.5 : 0);
       updateSecFader();
       return;
     } else {
@@ -320,7 +342,7 @@ function createFader(faderIndex, mixerContainer, faderTemplate) {
 
     if (event.buttons || (event.touches && event.touches.length)) {
       if (positionX >= 0 && positionX <= 1) {
-        changePanValue(positionX);
+        changeSecValue(positionX);
         updateSecFader();
       }
     }
@@ -358,7 +380,7 @@ function createFader(faderIndex, mixerContainer, faderTemplate) {
   }
 
   function setPan(db) {
-    panValue = sysExPanToNormalized(db + 30);
+    secValues["pan"] = sysExPanToNormalized(db + 30);
     updateSecFader();
   }
 
@@ -410,6 +432,7 @@ function createFader(faderIndex, mixerContainer, faderTemplate) {
   faders[faderIndex] = {
     fader,
     redraw,
+    updateSecFader,
   };
 }
 
@@ -423,13 +446,25 @@ function redrawPage(mixerContainer) {
   const faderList = mixerContainer.children;
 
   for (let faderIndex = 0; faderIndex < 64; faderIndex++) {
-    if (faderIndex >= 16 * (selectedPageNo - 1) && faderIndex <= 16 * selectedPageNo-1) {
+    if (faderIndex >= 16 * (selectedPageNo - 1) && faderIndex <= 16 * selectedPageNo - 1) {
       faderList[faderIndex].style.display = "flex";
       requestAnimationFrame(() => {
         faders[faderIndex].redraw();
       });
     } else {
       faderList[faderIndex].style.display = "none";
+    }
+  }
+}
+
+function setSecType(secTypeButton, secType) {
+  currentSecType = secType;
+  localStorage.setItem("currentSecType", currentSecType);
+  secTypeButton.innerHTML = currentSecType;
+
+  for (let faderIndex = 0; faderIndex < 64; faderIndex++) {
+    if (faderIndex >= 16 * (selectedPageNo - 1) && faderIndex <= 16 * selectedPageNo - 1) {
+      faders[faderIndex].updateSecFader();
     }
   }
 }
@@ -459,7 +494,18 @@ onDocumentReady(() => {
       localStorage.setItem("selectedPageNo", selectedPageNo);
       redrawPage(mixerContainer);
     });
-  })
+  });
+
+  const secTypeButton = document.querySelector(".sectype-btn");
+
+  setSecType(secTypeButton, currentSecType);
+
+  secTypeButton.addEventListener("click", () => {
+    const currentSecTypeIndex = secTypes.findIndex((type) => type === currentSecType);
+    const nextSecType = secTypes[currentSecTypeIndex === secTypes.length-1 ? 0 : currentSecTypeIndex+1];
+  
+    setSecType(secTypeButton, nextSecType);
+  });
 
   document.querySelector(".fullscreen-icon").addEventListener("click", () => {
     if (document.fullscreenElement) {

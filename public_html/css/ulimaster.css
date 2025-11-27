@@ -57,12 +57,20 @@ header .page-btn.active {
   color: #fff
 }
 
-/* .mute-btn {
-  margin-top: 10px;
-  margin-bottom: 10px;
+header .sectype-btn {
+  margin-left: 24px;
   padding: 4px 10px;
-} */
+  border-radius: 6px;
+  border: none;
+  background: #233041;
+  color: #eee;
+  font-size: 12px;
+  cursor: pointer
+}
 
+header .sectype-btn::first-letter {
+  text-transform: capitalize;
+}
 
 .mixer {
   height: 90%;
@@ -355,6 +363,16 @@ header .page-btn.active {
   font-size: 12px;
 
   user-select: none;
+}
+
+.sec-value-indicator span {
+  font-size: 10px;
+  color: #5a6a80;
+
+}
+
+.sec-value-indicator::first-letter {
+  text-transform: capitalize;
 }
 
 .mute-btn {
