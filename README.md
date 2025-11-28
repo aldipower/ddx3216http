@@ -8,7 +8,7 @@ Use cases
 
 Ideally this would run on an embedded system (e.g. a Raspberry Pi) that also provides a WiFi interface, so you could use a phone or tablet to control the desk (which probably sits at FOH) from, say, the stage.
 
-Or if you integrate your MIDI devices with a MIDI router, f.ex. the MioXL, via RTP into a LAN or even WAN, this script can run on any server in your RTP network. You could use [RTPmidi](https://mclarenlabs.com/rtpmidi/) on the server to make a RTP midi port available for this script.
+Or if you integrate your MIDI devices with a MIDI router, f.ex. the MioXL, via RTP into a LAN or even WAN, this script can run on any server in your RTP network. You can use [rtpmidid](https://github.com/davidmoreno/rtpmidid) on the server to make a RTP midi port available for this script.
 
 It is inspired by the various control apps available for newer digital mixers.
 
