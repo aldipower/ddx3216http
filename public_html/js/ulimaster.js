@@ -169,22 +169,22 @@ function createFader(faderIndex, mixerContainer, faderTemplate) {
     }
   }
 
-  let faderTapedTwice = false;
+  let faderTappedTwice = false;
 
   function containerTouchStart(event) {
     if (hasTouchSupport() && event.buttons) {
       return;
     }
 
-    if (faderTapedTwice) {
-      faderTapedTwice = false;
+    if (faderTappedTwice) {
+      faderTappedTwice = false;
       changeFaderValue(dbToNormalized(0));
       updateFader();
       return;
     } else {
-      faderTapedTwice = true;
+      faderTappedTwice = true;
       setTimeout(function () {
-        faderTapedTwice = false;
+        faderTappedTwice = false;
       }, 250);
     }
 
@@ -337,22 +337,22 @@ function createFader(faderIndex, mixerContainer, faderTemplate) {
     }
   }
 
-  let secTapedTwice = false;
+  let secTappedTwice = false;
 
   function secOverlayMouseDown(event) {
     if (event.clientX == null) {
       return;
     }
 
-    if (secTapedTwice) {
-      secTapedTwice = false;
+    if (secTappedTwice) {
+      secTappedTwice = false;
       changeSecValue(currentSecType === "pan" ? 0.5 : 0);
       updateSecFader();
       return;
     } else {
-      secTapedTwice = true;
+      secTappedTwice = true;
       setTimeout(function () {
-        secTapedTwice = false;
+        secTappedTwice = false;
       }, 250);
     }
 
