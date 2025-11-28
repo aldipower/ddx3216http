@@ -172,10 +172,6 @@ function createFader(faderIndex, mixerContainer, faderTemplate) {
   let faderTappedTwice = false;
 
   function containerTouchStart(event) {
-    if (hasTouchSupport() && event.buttons) {
-      return;
-    }
-
     if (faderTappedTwice) {
       faderTappedTwice = false;
       changeFaderValue(dbToNormalized(0));
@@ -228,7 +224,6 @@ function createFader(faderIndex, mixerContainer, faderTemplate) {
   faderOverlay.addEventListener("mouseout", containerTouchEnd);
   faderOverlay.addEventListener("mousemove", containerMouseMove);
   faderOverlay.addEventListener("touchmove", containerMouseMove);
-  faderOverlay.addEventListener("touchstart", containerTouchStart);
   faderOverlay.addEventListener("touchend", containerTouchEnd);
 
   const muteButton = fader.querySelector(".mute-btn");

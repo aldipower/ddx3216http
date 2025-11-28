@@ -73,6 +73,11 @@ How to set up your desk
 - Connect the MIDI Out port of the desk to the input of your computer's MIDI device
 - Connect the output of your computer's MIDI to the MIDI In port of the desk.
 
+Compability
+-----------
+
+For __mobile devices__ you need __at least Chrome 140, Firefox Mobile or a recent Safari for iOS__. The web ui should work on every modern desktop browser though.
+
 Debugging
 ---------
 
